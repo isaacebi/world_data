@@ -52,7 +52,7 @@ class InfoAPI:
             Description of data types from MET API.
 
         '''
-        response = requests.get(self.url, headers=self.headers)
+        response = requests.get(self.url, headers=self.headers, timeout=5)
 
         if response.status_code == 200:
             api_response = response.json()
@@ -127,10 +127,28 @@ def getCSV(urlDataTypes, urlBaseLoc, loc_list, saveFolder, TOKEN):
 
     # location information
     for loc in loc_list:
-        loc_url = urlBaseLoc + loc
-        result = InfoAPI(loc_url, TOKEN).extract_location()
-        path_save = os.path.join(saveFolder, f"{loc}.csv")
-        result.to_csv(path_save, index=False)
+        print(f'Scraping {loc} locations')
+        df = pd.DataFrame()
+        offSetNum = 0
+        
+        while True:
+            loc_url = urlBaseLoc + loc + "&offset=" + str(offSetNum)
+            result = InfoAPI(loc_url, TOKEN).extract_location()
+            df = pd.concat([df, result], ignore_index=True)
+
+            # check if there are more data to scrape
+            if result is not None:
+                time.sleep(3)
+                offSetNum += 50
+
+            else:
+               # create path
+                path_save = os.path.join(saveFolder, f"{loc}.csv")
+                # save file
+                df.to_csv(path_save, index=False)
+                break
+
+        time.sleep(60)
 
     print("Completed getting all MET general API information")
 
