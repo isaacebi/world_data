@@ -7,9 +7,5 @@ This project was intended to scrape all data available for suppliment to AI for 
 - [Introduction](#introduction)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Example](#example)
-- [Contributing](#contributing)
-- [License](#license)
 
   
