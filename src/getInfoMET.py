@@ -6,8 +6,9 @@ Created on Fri Dec  1 14:26:28 2023
 """
 
 # %%
-import requests
 import os
+import time
+import requests
 import pandas as pd
 
 # %%
@@ -115,7 +116,8 @@ class InfoAPI:
         else:
             print(f"Error: {response.status_code} - {response.text}")
             return None
-        
+
+# this work fine, but only get the initial 50 data.   
 def getCSV(urlDataTypes, urlBaseLoc, loc_list, saveFolder, TOKEN):
 
     # gets data types
@@ -132,6 +134,25 @@ def getCSV(urlDataTypes, urlBaseLoc, loc_list, saveFolder, TOKEN):
 
     print("Completed getting all MET general API information")
 
+def getDisCSV(TOKEN, savePath, urlDis='https://api.met.gov.my/v2.1/locations?locationcategoryid=DISTRICT'):
+    offSetNum = 0
+    df = pd.DataFrame()
+
+    while True:
+        URL = urlDis + "&offset=" + str(offSetNum)
+        results = InfoAPI(URL, TOKEN).extract_location()
+        df = pd.concat([df, results], ignore_index=True)
+        path_save = os.path.join(savePath, "DISTRICT.csv")
+        df.to_csv(path_save, index=False)
+
+        if results is not None:
+            time.sleep(10)
+            offSetNum += 50
+
+        else:
+            break
+
+    return df
 
 
-
+# %%

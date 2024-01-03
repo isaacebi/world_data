@@ -7,9 +7,20 @@ Created on Fri Dec  1 11:19:39 2023
 
 # %% IMPORTING
 import os
+import sys
+import pathlib
 import requests
 import pandas as pd
-import getInfoMET
+
+# %% Solving sys
+CURR_FILE = pathlib.Path(__file__).resolve()
+PROJECT_DIR = CURR_FILE.parents[1]
+
+# adding path
+sys.path.append(str(PROJECT_DIR))
+
+# own module
+from src import getInfoMET
 
 # %% PATH
 # current folder
@@ -38,7 +49,7 @@ LOCATIONS = ['STATE', 'DISTRICT', 'TOWN', 'TOURISTDEST', 'WATERS']
 
 def read_text_file(file_path):
     '''
-    To get the token value
+    To get the token value - access point for MET
 
     Parameters
     ----------
@@ -61,14 +72,14 @@ def read_text_file(file_path):
         return None
 
 
-def get_met_api_data(datasetid, start_date, end_date, URL, TOKEN):
+def get_met_api_data(datasetid, locationid, start_date, end_date, URL, TOKEN):
     url = URL
     headers = {"Authorization": TOKEN}
 
     params = {
         "datasetid": datasetid,
         "datacategoryid": "GENERAL",
-        "locationid": "LOCATION:237",
+        "locationid": locationid,
         "start_date": start_date,
         "end_date": end_date,
     }
@@ -114,7 +125,7 @@ def extract_weather_info(api_response):
 
 # %%
 # create token
-TOKEN = read_text_file(token_MET)
+# TOKEN = read_text_file(token_MET)
 
 # ---------------------------------------- #
 # Extract general information from MET API #
@@ -126,9 +137,9 @@ TOKEN = read_text_file(token_MET)
 # %%
 
 # Example usage
-start_date = "2023-12-01"
-end_date = "2023-12-01"
+# start_date = "2023-12-01"
+# end_date = "2023-12-01"
 
-result = get_met_api_data("FORECAST", start_date, end_date, MET_URL2, TOKEN)
+# result = get_met_api_data("FORECAST", start_date, end_date, MET_URL2, TOKEN)
     
 # weather_data = extract_weather_info(result)
