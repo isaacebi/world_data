@@ -24,8 +24,8 @@ MET_URL_DATA = MET_URL + "/data"
 
 # %%
 # TOKEN = getDataMET.read_text_file(TOKEN_PATH)
-TOKEN = os.environ['MET_TOKEN']
-print(type(TOKEN))
+# TOKEN = os.environ['MET_TOKEN']
+TOKEN = "METToken 0e3224804afcc91f503cda8359efd19c90db88b5"
 
 # %%
 def getDB(DB_Path):
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     dates = getDate(df_db)
 
     # request information from MET - SABAH
-    extract_df = getGenMET(dates, location='LOCATION:13', token=TOKEN)
+    extract_df = getGenMET(dates, location='LOCATION:13')
 
     # to db
     commitDB(extract_df, GENERAL_DATA)
