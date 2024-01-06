@@ -6,7 +6,7 @@ print(requests.__version__)
 
 TOKEN = os.environ['MET_TOKEN']
 
-print(TOKEN)
+print(len(TOKEN))
 
 headers = {"Authorization": TOKEN}
 params = {
