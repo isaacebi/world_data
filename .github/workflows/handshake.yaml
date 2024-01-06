@@ -1,0 +1,29 @@
+name: Hanshake
+
+on:
+  schedule:
+  - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  Daily_Scraper_Job:
+    name: Handshake MET API
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    - name: Install Requirements
+      run: pip install -r requirements.txt
+        
+    - name: Run Python Scraper
+      env:
+        MET_TOKEN: ${{ secrets.MET_TOKEN }}
+      run: python src/test_toke.py
+  
