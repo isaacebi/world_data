@@ -26,5 +26,7 @@ jobs:
       run: pip install -r requirements.txt
         
     - name: Run Python Scraper
+      env:
+        MET_TOKEN: ${{ secrets.MET_TOKEN }
       run: python src/getDayData.py
   
