@@ -5,9 +5,6 @@ on:
   - cron: '0 0 * * *'
   workflow_dispatch:
 
-env:
-  MET_TOKEN: ${{ secrets.MET_TOKEN }}
-
 jobs:
   Daily_Scraper_Job:
     name: Connecting MET API
@@ -24,7 +21,9 @@ jobs:
 
     - name: Install Requirements
       run: pip install -r requirements.txt
-
+        
     - name: Run Python Scraper
+      env:
+        MET_TOKEN: ${{ secrets.MET_TOKEN }}
       run: python src/getDayData.py
   

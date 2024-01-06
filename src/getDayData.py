@@ -127,6 +127,8 @@ def commitDB(df, gen_path):
 
 # %%
 if __name__ == "__main__":
+    print(TOKEN)
+    
     # get current db
     df_db = getDB(GENERAL_DATA)
 
