@@ -23,7 +23,8 @@ MET_URL = "https://api.met.gov.my/v2"
 MET_URL_DATA = MET_URL + "/data"
 
 # %%
-TOKEN = getDataMET.read_text_file(TOKEN_PATH)
+# TOKEN = getDataMET.read_text_file(TOKEN_PATH)
+TOKEN = os.environ('MET_TOKEN')
 
 # %%
 def getDB(DB_Path):
