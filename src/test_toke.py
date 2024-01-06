@@ -2,6 +2,8 @@ import os
 import pathlib
 import requests
 
+print(requests.__version__)
+
 TOKEN = os.environ['MET_TOKEN']
 
 headers = {"Authorization": TOKEN}
