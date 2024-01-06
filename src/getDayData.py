@@ -92,8 +92,6 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         # get dates to string
         extract_date = t.strftime('%Y-%m-%d')
 
-        print(extract_date)
-
         # extract information
         getJSON = getDataMET.get_met_api_data(
         "FORECAST", location, extract_date, extract_date, URL, token
@@ -129,6 +127,8 @@ def commitDB(df, gen_path):
 
 # %%
 if __name__ == "__main__":
+    logger.info(TOKEN)
+    
     # get current db
     df_db = getDB(GENERAL_DATA)
 
