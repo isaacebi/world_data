@@ -14,6 +14,6 @@ params = {
     "end_date": "2024-01-01",
 }
 
-response = requests.get(URL, headers=headers, params=params)
+response = requests.get(url=URL, headers=headers, params=params)
 
 print(response.status_code)
