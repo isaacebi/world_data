@@ -80,6 +80,8 @@ def getDate(df):
 def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
     df = pd.DataFrame()
 
+    print(token)
+
     # Throttling
     # Burst rate : 10 per minute
     # Sustained rate: 2000 per day
@@ -96,8 +98,6 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         getJSON = getDataMET.get_met_api_data(
         "FORECAST", location, extract_date, extract_date, URL, token
         )
-
-        print(getJSON)
 
         # delay
         time.sleep(10)
