@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  Daily_Scraper_Job:
+    name: Connecting MET API
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +17,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.11'
+        python-version: 3.11
 
     - name: Install Requirements
       run: pip install -r requirements.txt
