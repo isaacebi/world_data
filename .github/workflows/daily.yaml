@@ -1,1 +1,26 @@
 name: daily scraper
+
+on:
+  schedule:
+  - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install Requirements
+      run: pip install -r requirements.txt
+
+    - name: Run Python Scraper
+      run: python src/getDayData.py
+  
