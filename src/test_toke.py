@@ -17,6 +17,6 @@ params = {
 
 URL = f'https://api.met.gov.my/v2.1/data?datasetid={params["datasetid"]}&datacategoryid={params["datacategoryid"]}&locationid={params["locationid"]}&start_date={params["start_date"]}&end_date={params["end_date"]}'
 
-response = requests.get(url=URL, headers=headers)
+# response = requests.get(url=URL, headers=headers)
 
-print(response.status_code)
+# print(response.status_code)
