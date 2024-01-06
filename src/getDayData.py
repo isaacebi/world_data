@@ -25,7 +25,6 @@ MET_URL_DATA = MET_URL + "/data"
 # %%
 # TOKEN = getDataMET.read_text_file(TOKEN_PATH)
 TOKEN = os.environ['MET_TOKEN']
-print(TOKEN)
 
 # %%
 def getDB(DB_Path):
@@ -97,6 +96,8 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         getJSON = getDataMET.get_met_api_data(
         "FORECAST", location, extract_date, extract_date, URL, token
         )
+
+        print(getJSON)
 
         # delay
         time.sleep(10)
