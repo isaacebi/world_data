@@ -16,8 +16,8 @@ params = {
 
 response = requests.get(
     URL,
-    header,
-    params
+    header=header,
+    params=params
 )
 
 print(response.status_code)
