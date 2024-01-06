@@ -135,7 +135,7 @@ if __name__ == "__main__":
     dates = getDate(df_db)
 
     # request information from MET - SABAH
-    extract_df = getGenMET(dates, location='LOCATION:13')
+    extract_df = getGenMET(dates, location='LOCATION:13', token=TOKEN)
 
     # to db
     commitDB(extract_df, GENERAL_DATA)
