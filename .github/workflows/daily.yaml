@@ -24,6 +24,6 @@ jobs:
         
     - name: Run Python Scraper
       env:
-        MET_TOKEN: ${{ secrets.MET_TOKEN }
+        MET_TOKEN: ${{ secrets.MET_TOKEN }}
       run: python src/getDayData.py
   
