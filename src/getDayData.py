@@ -25,6 +25,7 @@ MET_URL_DATA = MET_URL + "/data"
 # %%
 # TOKEN = getDataMET.read_text_file(TOKEN_PATH)
 TOKEN = os.environ['MET_TOKEN']
+print(TOKEN)
 
 # %%
 def getDB(DB_Path):
