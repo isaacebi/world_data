@@ -4,7 +4,7 @@ import requests
 
 print(requests.__version__)
 
-TOKEN = os.environ['MET_TOKEN']
+TOKEN = "METToken 0e3224804afcc91f503cda8359efd19c90db88b5"
 
 print(len(TOKEN))
 
