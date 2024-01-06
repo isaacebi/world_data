@@ -4,7 +4,7 @@ import requests
 
 print(requests.__version__)
 
-TOKEN = ${{ secrets.MET_TOKEN }}
+TOKEN = os.environ['MET_TOKEN']
 
 print(len(TOKEN))
 
