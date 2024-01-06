@@ -4,7 +4,6 @@ import requests
 
 TOKEN = os.environ['MET_TOKEN']
 
-URL = "https://api.met.gov.my/v2/data"
 headers = {"Authorization": TOKEN}
 params = {
     "datasetid": "FORECAST",
@@ -14,6 +13,8 @@ params = {
     "end_date": "2024-01-01",
 }
 
-response = requests.get(url=URL, headers=headers, params=params)
+URL = f'https://api.met.gov.my/v2.1/data?datasetid={params["datasetid"]}&datacategoryid={params["datacategoryid"]}&locationid={params["locationid"]}&start_date={params["start_date"]}&end_date={params["end_date"]}'
+
+response = requests.get(url=URL, headers=headers)
 
 print(response.status_code)
