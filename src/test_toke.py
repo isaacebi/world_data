@@ -22,3 +22,11 @@ URL = f'https://api.met.gov.my/v2.1/data?datasetid={params["datasetid"]}&datacat
 response = requests.get(url=URL, headers=headers)
 
 print(response.status_code)
+
+
+# pathing
+CURR_FILE = pathlib.Path(__file__).resolve()
+PROJECT_DIR = CURR_FILE.parents[1]
+
+print(CURR_FILE)
+print(PROJECT_DIR)
