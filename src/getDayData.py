@@ -100,7 +100,8 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         # delay
         time.sleep(10)
         # print current date extracted
-        cmd = f'Currently extracting {t}'
+        text = f'Currently extracting {t}'
+        cmd = f'echo {text}'
         os.system(cmd)
 
         # json to pandas
