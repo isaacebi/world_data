@@ -2,6 +2,7 @@ import os
 import pathlib
 import requests
 import sqlite3
+import pandas as pd
 
 
 print(requests.__version__)
