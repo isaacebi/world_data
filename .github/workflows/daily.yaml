@@ -7,7 +7,8 @@ on:
 
 jobs:
   Daily_Scraper_Job:
-    name: Connecting MET API
+    name: General MET API
+    environment: MET
     runs-on: ubuntu-latest
 
     steps:
