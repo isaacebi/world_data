@@ -27,6 +27,21 @@ print(response.status_code)
 # pathing
 CURR_FILE = pathlib.Path(__file__).resolve()
 PROJECT_DIR = CURR_FILE.parents[1]
+DATA_DIR = os.path.join(PROJECT_DIR, 'data')
+TOKEN_PATH = os.path.join(DATA_DIR, 'MET', 'token.txt')
+DATA_RAW = os.path.join(DATA_DIR, 'raw')
 
-print(CURR_FILE)
-print(PROJECT_DIR)
+# DB
+GENERAL_DATA = os.path.join(DATA_RAW, 'general.db')
+
+#
+def getDB(DB_Path):
+    # create connection
+    conn = sqlite3.connect(DB_Path)
+
+    # query to pandas on forecast table
+    df = pd.read_sql_query("SELECT * FROM forecast", conn)
+
+    return df
+
+print(getDB(GENERAL_DATA))
