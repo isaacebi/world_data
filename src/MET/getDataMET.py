@@ -12,28 +12,18 @@ import pathlib
 import requests
 import pandas as pd
 
-# %% Solving sys
+# %% PATHING
 CURR_FILE = pathlib.Path(__file__).resolve()
-PROJECT_DIR = CURR_FILE.parents[1]
+PROJECT_DIR = CURR_FILE.parents[2]
+DATA_PATH = os.path.join(PROJECT_DIR, 'data')
+DATA_MET_PATH = os.path.join(DATA_PATH, 'MET')
+TOKEN_MET_PATH = os.path.join(DATA_MET_PATH, 'token.txt')
 
 # adding path
 sys.path.append(str(PROJECT_DIR))
 
-# own module
-from src import getInfoMET
-
-# %% PATH
-# current folder
-current_folder = os.getcwd()
-# main folder
-folder = os.path.dirname(current_folder)
-# data folder
-data = os.path.join(folder, 'data')
-# data > MET folder
-data_met = os.path.join(data, 'MET')
-# token
-token_MET = os.path.join(data, 'MET', 'token.txt')
-
+# internal module
+from src.MET import getInfoMET
 
 # URL
 MET_URL = "https://api.met.gov.my/v2"
@@ -125,7 +115,7 @@ def extract_weather_info(api_response):
 
 # %%
 # create token
-# TOKEN = read_text_file(token_MET)
+TOKEN = read_text_file(TOKEN_MET_PATH)
 
 # ---------------------------------------- #
 # Extract general information from MET API #
@@ -136,10 +126,13 @@ def extract_weather_info(api_response):
 
 # %%
 
-# Example usage
-# start_date = "2023-12-01"
-# end_date = "2023-12-01"
+if __name__ == "__main__":
+    # Example usage
+    start_date = "2023-12-01"
+    end_date = "2023-12-01"
 
-# result = get_met_api_data("FORECAST", start_date, end_date, MET_URL2, TOKEN)
-    
-# weather_data = extract_weather_info(result)
+    result = get_met_api_data("FORECAST", "LOCATION:237", start_date, end_date, MET_URL2, TOKEN)
+        
+    # weather_data = extract_weather_info(result)
+
+# %%

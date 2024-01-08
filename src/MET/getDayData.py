@@ -3,17 +3,19 @@ import os
 import time
 import pathlib
 import sqlite3
-import getDataMET
 import pandas as pd
 from datetime import date, datetime, timedelta
+
+# internal module
+import getDataMET
 
 # %%
 # PATH
 CURR_FILE = pathlib.Path(__file__).resolve()
-PROJECT_DIR = CURR_FILE.parents[1]
+PROJECT_DIR = CURR_FILE.parents[2]
 DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 TOKEN_PATH = os.path.join(DATA_DIR, 'MET', 'token.txt')
-DATA_RAW = os.path.join(DATA_DIR, 'raw')
+DATA_RAW = os.path.join(DATA_DIR, 'raw', 'MET')
 
 # DB
 GENERAL_DATA = os.path.join(DATA_RAW, 'general.db')
@@ -23,8 +25,8 @@ MET_URL = "https://api.met.gov.my/v2"
 MET_URL_DATA = MET_URL + "/data"
 
 # %%
-# TOKEN = getDataMET.read_text_file(TOKEN_PATH)
-TOKEN = os.environ['MET_TOKEN']
+TOKEN = getDataMET.read_text_file(TOKEN_PATH) # enable to run locally
+# TOKEN = os.environ['MET_TOKEN'] # enable to run via gitaction
 
 # %%
 def getDB(DB_Path):
@@ -131,8 +133,6 @@ def commitDB(df, gen_path):
 
 # %%
 if __name__ == "__main__":
-    print(TOKEN)
-    
     # get current db
     df_db = getDB(GENERAL_DATA)
 
