@@ -1,4 +1,5 @@
-name: daily scraper
+
+name: Hanshake
 
 on:
   schedule:
@@ -7,7 +8,7 @@ on:
 
 jobs:
   Daily_Scraper_Job:
-    name: General MET API
+    name: Handshake MET API
     environment: MET
     runs-on: ubuntu-latest
 
@@ -26,10 +27,5 @@ jobs:
     - name: Run Python Scraper
       env:
         MET_TOKEN: ${{ secrets.MET_TOKEN }}
-      run: python src/getDayData.py
-
-    - name: Auto Commit
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: Daily Scraper Scheduler
+      run: python src/test_toke.py
   
