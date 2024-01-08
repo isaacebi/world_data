@@ -47,3 +47,8 @@ def getDB(DB_Path):
     return df
 
 print(getDB(GENERAL_DATA))
+
+if 'REQUEST_METHOD' in os.environ :
+    print("This is a webpage")
+else :
+    print("This is not a webpage")
