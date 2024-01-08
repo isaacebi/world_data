@@ -37,11 +37,11 @@ def getDB(DB_Path):
 
 # to get token based on state run which either local or gitaction
 def getToken(token=TOKEN_PATH):
-    if 'REQUEST_METHOD' in os.environ :
+    # check if in gitaction
+    if os.getenv("GITHUB_ACTIONS") :
         TOKEN = os.environ['MET_TOKEN']
         print("Proceed with secret token")
         return TOKEN
-    
     else :
         TOKEN = getDataMET.read_text_file(token)
         print("Proceed with local token")
