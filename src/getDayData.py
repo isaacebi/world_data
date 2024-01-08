@@ -101,7 +101,7 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         time.sleep(10)
         # print current date extracted
         cmd = f'Currently extracting {t}'
-        os.sys(cmd)
+        os.system(cmd)
 
         # json to pandas
         jdf = getDataMET.extract_weather_info(getJSON)
