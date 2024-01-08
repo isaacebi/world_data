@@ -115,7 +115,7 @@ def extract_weather_info(api_response):
 
 # %%
 # create token
-TOKEN = read_text_file(TOKEN_MET_PATH)
+# TOKEN = read_text_file(TOKEN_MET_PATH)
 
 # ---------------------------------------- #
 # Extract general information from MET API #
