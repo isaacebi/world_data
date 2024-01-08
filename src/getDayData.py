@@ -106,6 +106,7 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
 
         # json to pandas
         jdf = getDataMET.extract_weather_info(getJSON)
+        print(jdf)
 
         # concat pandas
         df = pd.concat([df, jdf], ignore_index=True)
