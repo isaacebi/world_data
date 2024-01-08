@@ -1,6 +1,8 @@
 import os
 import pathlib
 import requests
+import sqlite3
+
 
 print(requests.__version__)
 
