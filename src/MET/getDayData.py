@@ -25,22 +25,39 @@ MET_URL = "https://api.met.gov.my/v2"
 MET_URL_DATA = MET_URL + "/data"
 
 # %%
-TOKEN = getDataMET.read_text_file(TOKEN_PATH) # enable to run locally
-# TOKEN = os.environ['MET_TOKEN'] # enable to run via gitaction
+def displayText(texts):
+    cmd = 'echo {}'.format(texts)
+    os.system(cmd)
 
-# %%
-def getDB(DB_Path):
-    # create connection
-    conn = sqlite3.connect(DB_Path)
+# to get token based on state run which either local or gitaction
+def getToken(token=TOKEN_PATH):
+    # check if in gitaction
+    if os.getenv("GITHUB_ACTIONS") :
+        TOKEN = os.environ['MET_TOKEN']
+        
+        # displaying status
+        text = "Proceed with secret token"
+        displayText(text)
+        return TOKEN
+    
+    else :
+        TOKEN = getDataMET.read_text_file(token)
 
+        # displaying status
+        text = "Proceed with local token"
+        displayText(text)
+        return TOKEN
+        
+
+def getDB(cnx) -> pd.DataFrame():
     # query to pandas on forecast table
-    df = pd.read_sql_query("SELECT * FROM forecast", conn)
-
+    df = pd.read_sql_query("SELECT * FROM forecast", cnx)
     return df
 
-def getDate(df):
+# This function need to have test unit. Like really
+def getDate(df) -> list:
     # start date 
-    start_date = datetime.strptime("2023-12-01", '%Y-%m-%d').date()
+    start_date = datetime.strptime("2019-01-01", '%Y-%m-%d').date()
 
     # get today date
     today = date.today()
@@ -69,17 +86,18 @@ def getDate(df):
         edate = today
 
     # ranges to be extract
-    date_list = pd.date_range(sdate, edate, freq='d')
+    date_list = pd.date_range(sdate, edate, freq='d').strftime('%Y-%m-%d').to_list()
 
     # existing list
-    exist_list = pd.to_datetime(df['date']).dt.date.to_list()
+    exist_list = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d').to_list()
 
     # date of list
     date_list = [x for x in date_list if x not in exist_list]
 
+    # the item return should be in list, and item in the list should be str
     return date_list
 
-def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
+def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken()):
     df = pd.DataFrame()
 
     # Throttling
@@ -91,8 +109,11 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
         date_list = date_list[:10]
 
     for t in date_list:
-        # get dates to string
-        extract_date = t.strftime('%Y-%m-%d')
+        # check dtype, if not str then change to str
+        if type(t) != str:
+            extract_date = t.strftime('%Y-%m-%d')
+        else:
+            extract_date = t
 
         # extract information
         getJSON = getDataMET.get_met_api_data(
@@ -101,26 +122,22 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=TOKEN):
 
         # delay
         time.sleep(10)
-        # print current date extracted
+        # display progress
         text = f'Currently extracting {t}'
-        cmd = f'echo {text}'
-        os.system(cmd)
+        displayText(text)
 
         # json to pandas
         jdf = getDataMET.extract_weather_info(getJSON)
-        print(jdf)
 
         # concat pandas
         df = pd.concat([df, jdf], ignore_index=True)
 
     return df
 
-def commitDB(df, gen_path):
-    conn = sqlite3.connect(gen_path)
-
+def commitDB(df, cnx):
     # create sql if sql not exist
     create_sql = "CREATE TABLE IF NOT EXISTS forecast (data_type INTEGER, location_name TEXT, date TEXT, FGA TEXT, FGM TEXT, FGN TEXT, FMAXT INTEGER, FMINT INTEGER, FSIGW text)"
-    cursor = conn.cursor()
+    cursor = cnx.cursor()
     cursor.execute(create_sql)
 
     # insert new data to db
@@ -130,18 +147,28 @@ def commitDB(df, gen_path):
         cursor.execute(insert_sql)
 
     # commit to db
-    conn.commit()
+    cnx.commit()
 
 # %%
 if __name__ == "__main__":
+    # create db connection
+    conn = sqlite3.connect(GENERAL_DATA)
+    text = "Connecting DB"
+    displayText(text)
+    
     # get current db
-    df_db = getDB(GENERAL_DATA)
+    df_db = getDB(conn)
 
     # get dates need to be request
-    dates = getDate(df_db)
+    dates = getDate(df_db.drop_duplicates())
 
     # request information from MET - SABAH
     extract_df = getGenMET(dates, location='LOCATION:13')
 
     # to db
-    commitDB(extract_df, GENERAL_DATA)
+    commitDB(extract_df, conn)
+
+    # close db connection
+    conn.cursor().close()
+    text = "Closing DB Connection"
+    displayText(text)
