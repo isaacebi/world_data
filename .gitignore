@@ -2,3 +2,4 @@
 data/MET/token.txt
 
 *.pyc
+.vscode/settings.json
