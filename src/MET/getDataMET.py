@@ -16,8 +16,9 @@ import pandas as pd
 CURR_FILE = pathlib.Path(__file__).resolve()
 PROJECT_DIR = CURR_FILE.parents[2]
 DATA_PATH = os.path.join(PROJECT_DIR, 'data')
-DATA_MET_PATH = os.path.join(DATA_PATH, 'MET')
-TOKEN_MET_PATH = os.path.join(DATA_MET_PATH, 'token.txt')
+DATA_RAW = os.path.join(DATA_PATH, 'raw')
+DATA_SECRET = os.path.join(DATA_PATH, 'secret')
+TOKEN_MET_PATH = os.path.join(DATA_SECRET, 'MET.txt')
 
 # adding path
 sys.path.append(str(PROJECT_DIR))
@@ -60,6 +61,17 @@ def read_text_file(file_path):
     except FileNotFoundError:
         print(f"Error: File not found at {file_path}")
         return None
+    
+# to get token based on state run which either local or gitaction
+def getToken(token=TOKEN_MET_PATH):
+    # check if in gitaction
+    if os.getenv("GITHUB_ACTIONS") :
+        TOKEN = os.environ['MET_TOKEN']
+        return TOKEN
+    
+    else :
+        TOKEN = read_text_file(token)
+        return TOKEN
 
 
 def get_met_api_data(datasetid, locationid, start_date, end_date, URL, TOKEN):
@@ -131,7 +143,7 @@ if __name__ == "__main__":
     start_date = "2023-12-01"
     end_date = "2023-12-01"
 
-    result = get_met_api_data("FORECAST", "LOCATION:237", start_date, end_date, MET_URL2, TOKEN)
+    result = get_met_api_data("FORECAST", "LOCATION:237", start_date, end_date, MET_URL2, getToken())
         
     # weather_data = extract_weather_info(result)
 
