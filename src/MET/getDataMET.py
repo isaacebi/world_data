@@ -10,6 +10,7 @@ import os
 import sys
 import pathlib
 import requests
+import numpy as np
 import pandas as pd
 
 # %% PATHING
@@ -17,6 +18,7 @@ CURR_FILE = pathlib.Path(__file__).resolve()
 PROJECT_DIR = CURR_FILE.parents[2]
 DATA_PATH = os.path.join(PROJECT_DIR, 'data')
 DATA_RAW = os.path.join(DATA_PATH, 'raw')
+DATA_MET = os.path.join(DATA_RAW, 'MET')
 DATA_SECRET = os.path.join(DATA_PATH, 'secret')
 TOKEN_MET_PATH = os.path.join(DATA_SECRET, 'MET.txt')
 
@@ -100,6 +102,10 @@ def get_met_api_data(datasetid, locationid, start_date, end_date, URL, TOKEN):
 def extract_weather_info(api_response):
     weather_info_list = []
 
+    # some cases, there are no information
+    if len(api_response['results']) == 0:
+        return None
+
     for result in api_response['results']:
         location_name = result['locationname']
         date = result['date']
@@ -124,6 +130,23 @@ def extract_weather_info(api_response):
     # return as pivot tables
     return pivot_df
 
+def getLocation(folderPath):
+    general_locations = [
+        'STATE',
+        'DISTRICT',
+        'TOWN',
+        'TOURISTDEST'
+    ]
+
+    locations = []
+
+    for loc in general_locations:
+        csvPath = os.path.join(folderPath, f'{loc}.csv')
+        df = pd.read_csv(csvPath)
+        locationID = df['location_id'].to_list()
+        [locations.append(x) for x in locationID]
+
+    return locations
 
 # %%
 # create token
