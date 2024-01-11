@@ -1,6 +1,7 @@
 # %% Libraries
 import os
 import time
+import random
 import pathlib
 import sqlite3
 import pandas as pd
@@ -15,11 +16,12 @@ CURR_FILE = pathlib.Path(__file__).resolve()
 PROJECT_DIR = CURR_FILE.parents[2]
 DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 DATA_SECRET = os.path.join(DATA_DIR, 'secret')
-DATA_RAW = os.path.join(DATA_DIR, 'raw', 'MET')
+DATA_RAW = os.path.join(DATA_DIR, 'raw')
+DATA_MET = os.path.join(DATA_RAW, 'MET')
 TOKEN_PATH = os.path.join(DATA_SECRET, 'MET.txt')
 
 # DB
-GENERAL_DATA = os.path.join(DATA_RAW, 'general.db')
+GENERAL_DATA = os.path.join(DATA_MET, 'general.db')
 
 # URL
 MET_URL = "https://api.met.gov.my/v2"
@@ -98,7 +100,7 @@ def getDate(df) -> list:
     # the item return should be in list, and item in the list should be str
     return date_list
 
-def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken()):
+def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken(), iter=5):
     df = pd.DataFrame()
 
     # Throttling
@@ -106,8 +108,8 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken()):
     # Sustained rate: 2000 per day
 
     # only do 10 iter per day
-    if len(date_list) > 10:
-        date_list = date_list[:10]
+    if len(date_list) > iter:
+        date_list = date_list[:iter]
 
     for t in date_list:
         # check dtype, if not str then change to str
@@ -127,15 +129,23 @@ def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken()):
         text = f'Currently extracting {t}'
         displayText(text)
 
-        # json to pandas
-        jdf = getDataMET.extract_weather_info(getJSON)
+        # sometimes, there are no data for the date, therefore this is to skip process if such cases exist
+        if getJSON is not None:
+            # json to pandas
+            jdf = getDataMET.extract_weather_info(getJSON)
 
-        # concat pandas
-        df = pd.concat([df, jdf], ignore_index=True)
+            # concat pandas
+            df = pd.concat([df, jdf], ignore_index=True)
 
     return df
 
-def commitDB(df, cnx):
+def commitDB(df:pd.DataFrame(), cnx):
+    # skip if df is not true
+    if df.empty:
+        text = "Nothing to commit"
+        displayText(text)
+        return None
+
     # create sql if sql not exist
     create_sql = "CREATE TABLE IF NOT EXISTS forecast (data_type INTEGER, location_name TEXT, date TEXT, FGA TEXT, FGM TEXT, FGN TEXT, FMAXT INTEGER, FMINT INTEGER, FSIGW text)"
     cursor = cnx.cursor()
@@ -163,8 +173,18 @@ if __name__ == "__main__":
     # get dates need to be request
     dates = getDate(df_db.drop_duplicates())
 
-    # request information from MET - SABAH
-    extract_df = getGenMET(dates, location='LOCATION:13')
+    # get all location id for general forecast
+    locations = getDataMET.getLocation(DATA_MET)
+
+    # get random sampling - to avoid from overuse gitaction free time
+    locations = random.sample(locations, 5)
+
+    for loc in locations:
+        text = f'Extracting from {loc}'
+        displayText(text)
+
+        # request information from MET - SABAH
+        extract_df = getGenMET(dates, location=loc)
 
     # to db
     commitDB(extract_df, conn)
