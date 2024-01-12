@@ -2,9 +2,13 @@
 import os
 import json
 import pathlib
+import sqlite3
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+
+# internal module
+import getData
 
 # %% PATHING
 CURR_FILE = pathlib.Path(__file__).resolve()
@@ -15,6 +19,8 @@ DATA_RAW = os.path.join(DATA_DIR, 'raw')
 DATA_DE = os.path.join(DATA_RAW, 'DE')
 TRACK_PATH = os.path.join(DATA_DE, 'static.json')
 
+# DB
+TITLE_PATH = os.path.join(DATA_DE, 'news.db')
 
 # %%
 def getJson(jsonPath):
@@ -31,6 +37,7 @@ def getJson(jsonPath):
             trackData[i] = jsonData[i]
 
     return trackData
+
 
 def getLastestPage(page:str, location='Kota%20Kinabalu'):
     
@@ -54,12 +61,81 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
 
     return page
 
+def getDB(cnx, tableName='title') -> pd.DataFrame():
+    # query to pandas on forecast table
+    df = pd.read_sql_query(f"SELECT * FROM {tableName}", cnx)
+    return df
+
+def commitDB(df:pd.DataFrame(), cnx):
+    # skip if df is not true
+    if df.empty:
+        text = "Nothing to commit"
+        getData.displayText(text)
+        return None
+
+    # create sql if sql not exist
+    create_sql = "CREATE TABLE IF NOT EXISTS title (date TEXT, location TEXT, title TEXT)"
+    cursor = cnx.cursor()
+    cursor.execute(create_sql)
+
+    # insert new data to db
+    for row in df.itertuples():
+        insert_sql = f"INSERT INTO title (date, location, title) \
+            VALUES ('{row[1]}', '{row[2]}', '{row[3]}')"
+        cursor.execute(insert_sql)
+
+    # commit to db
+    cnx.commit()
 
 # %%
-yesterday_page = getJson(TRACK_PATH)
-today_page = getLastestPage(page=yesterday_page['no_page'])
+    
+if __name__ == "__main__":
+    today_page = {}
 
-scrape_page = today_page - yesterday_page
+    # create db connection
+    conn = sqlite3.connect(TITLE_PATH)
+    text = "Connecting DB"
+    getData.displayText(text)
 
+    # get db
+    df_title = getDB(conn)
 
-# %%
+    # get recent page
+    yesterday_page = getJson(TRACK_PATH)
+
+    # get all locations
+    locations = getData.getLocations()
+    # removing duplicated if any
+    locations = list(dict.fromkeys(locations))
+
+    # create empty dataframe
+    dft = pd.DataFrame()
+
+    # go through location by location and get the data
+    for loc in locations:
+        # update today page
+        today_page[loc] = getLastestPage(
+            page=yesterday_page[loc],
+            location=loc
+        )
+
+        # get new page to be extract
+        new_page = today_page[loc] - yesterday_page[loc]
+
+        # only scrape the new page title
+        for p in range(1, new_page[loc]+1):
+            titles = getData.getTitle(
+                location=loc,
+                page=str(p)
+            )
+
+            dft = pd.concat([dft, pd.DataFrame(titles)])
+
+    dft = pd.concat([dft, df_title]).drop_duplicates(keep=False)
+
+    # update json file
+    with open(TRACK_PATH, 'w') as f:
+        json.dump(today_page, f)
+
+    # update database
+    commitDB(pd.DataFrame(titles), conn)
