@@ -100,6 +100,7 @@ def getDate(df) -> list:
     # the item return should be in list, and item in the list should be str
     return date_list
 
+# TODO: check the dataframe output
 def getGenMET(date_list, location, URL=MET_URL_DATA, token=getToken(), iter=5):
     df = pd.DataFrame()
 
