@@ -67,6 +67,11 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
 
     return page
 
+def cleanText(df):
+    for col in df:
+        df[col] = df[col].replace("'", "")
+    return df
+
 def getDB(cnx, tableName='title') -> pd.DataFrame():
     # query to pandas on forecast table
     df = pd.read_sql_query(f"SELECT * FROM {tableName}", cnx)
@@ -86,9 +91,9 @@ def commitDB(df:pd.DataFrame(), cnx):
 
     # insert new data to db
     for row in df.itertuples():
-        insert_sql = f"INSERT INTO title (date, location, title) \
-            VALUES ('{row[1]}', '{row[2]}', '{row[3]}')"
-        cursor.execute(insert_sql)
+        insert_sql = "INSERT INTO title (date, location, title) VALUES (?, ?, ?)"
+        data = (row[1], row[2], row[3])
+        cursor.execute(insert_sql, data)
 
     # commit to db
     cnx.commit()
@@ -134,11 +139,12 @@ if __name__ == "__main__":
         new_page = today_page[loc] - yesterday_page[loc]
 
         # only scrape the new page title
-        for p in range(1, today_page[loc]+1):
+        #for p in range(1, today_page[loc]+1):
+        for p in range(1, 20):
             text = f"Scraping {loc} on page {p}"
             getData.displayText(text)
 
-            time.sleep(1)
+            time.sleep(2)
 
             titles = getData.getTitle(
                 location=loc,
@@ -154,11 +160,13 @@ if __name__ == "__main__":
 
         dft = pd.concat([dft, df_title]).drop_duplicates(keep=False)
 
+    dft = cleanText(dft)
+
     # update json file
     with open(TRACK_PATH, 'w') as f:
         json.dump(today_page, f)
 
     # update database
-    commitDB(pd.DataFrame(dft), conn)
+    commitDB(dft, conn)
 
 # %%
