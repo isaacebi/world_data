@@ -1,6 +1,7 @@
 # %%
 import os
 import re
+import time
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -14,7 +15,6 @@ def displayText(texts):
     os.system(cmd)
 
 # get the "LOCAL SABAH NEWS" section title for each page
-# TODO: implement to get the missing request
 def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> list:
     # creating extracting list
     local_url = url + '/local'
@@ -67,6 +67,32 @@ def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> l
             newslist.append(news)
         
     return newslist
+
+def getFailScrape(df, url="https://www.dailyexpress.com.my"):
+    # create empty dataframe
+    dft = pd.DataFrame() # store data
+    rerun = pd.DataFrame() # to be run again
+    
+    # df will contain location & page
+    for idx in df.index:
+        text = f"Scraping {df['location'][idx]} on page {df['page'][idx]}"
+        displayText(text)
+
+        titles = getTitle(
+            location=df['location'][idx],
+            page=str(df['page'][idx])
+        )
+
+        time.sleep(2)
+
+        if isinstance(titles, dict):
+            text = f"Scraping {df['location'][idx]} on page {df['page'][idx]}"
+            displayText(text)
+            rerun = pd.concat([rerun, pd.DataFrame(titles, index=[0])])
+        else:
+            dft = pd.concat([dft, pd.DataFrame(titles)])
+
+    return dft, rerun
 
 def getLocations(URL="https://www.dailyexpress.com.my/index.cfm") -> list:
     locations = []

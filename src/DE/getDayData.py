@@ -66,6 +66,7 @@ def getDB(cnx, tableName='title') -> pd.DataFrame():
     df = pd.read_sql_query(f"SELECT * FROM {tableName}", cnx)
     return df
 
+# TODO: need to create class to handle success db and fail
 def commitDB(df:pd.DataFrame(), cnx):
     # skip if df is not true
     if df.empty:
@@ -80,9 +81,9 @@ def commitDB(df:pd.DataFrame(), cnx):
 
     # insert new data to db
     for row in df.itertuples():
-        insert_sql = f"INSERT INTO title (date, location, title) \
-            VALUES ('{row[1]}', '{row[2]}', '{row[3]}')"
-        cursor.execute(insert_sql)
+        insert_sql = "INSERT INTO title (date, location, title) VALUES (?, ?, ?)"
+        data = (row[1], row[2], row[3])
+        cursor.execute(insert_sql, data)
 
     # commit to db
     cnx.commit()
