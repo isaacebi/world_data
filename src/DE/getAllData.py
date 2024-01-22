@@ -2,6 +2,7 @@
 import os
 import json
 import time
+import random
 import pathlib
 import sqlite3
 import requests
@@ -54,21 +55,24 @@ def getRequest(URL):
     return targets
 
 # will only valid if pageNumber is outer from the news
-def binary_search(location:str, pageNum:int) -> int:
+def binary_search(location:str, pageList:list) -> int:
     # first number, mid number, last number
-    fNum = pageNum // 2
-    mNum = fNum + fNum // 2
-    lNum = pageNum
-    fml = [fNum, mNum, lNum]
+    fNum = pageList[0]
+    mNum = pageList[1]
+    lNum = pageList[2]
+
+    pageNum = pageList[2]
+
     fml_indicator = []
 
-    for num in fml:
+    for num in pageList:
         URL = f"https://www.dailyexpress.com.my/local/?location={location}&pageNo={num}"
         targets = getRequest(URL)
         indicator = any("Will be available soon..." in target.text for target in targets)
         fml_indicator.append(indicator)
     
-    print(fml)
+    # for troubleshooting
+    print(pageList)
     print(fml_indicator)
 
     # check end number
@@ -78,38 +82,43 @@ def binary_search(location:str, pageNum:int) -> int:
 
     print(f"Check {location} on page {pageNum}")
 
-    # case 1
+    # case 1 - current page is invalid and current - 1 page is valid
     LP_url = f"https://www.dailyexpress.com.my/local/?location={location}&pageNo={pageNum-1}"
     LP_target = getRequest(LP_url)
     LP_indicator = any("Will be available soon..." in target.text for target in LP_target)
 
-    # case 2
+    # case 2 - current page is valid and current + 1 page is invalid
     plusOneUrl = f"https://www.dailyexpress.com.my/local/?location={location}&pageNo={pageNum+1}"
     plusOneTarget = getRequest(plusOneUrl)
     plusOneIndicator = any("Will be available soon..." in target.text for target in plusOneTarget)
 
+    # case 1
     if not LP_indicator and indicator:
-        return pageNum-1
+        return pageList[2]-1
     
+    # case 2
     elif plusOneIndicator and not indicator:
-        return pageNum
+        return pageList[2]+1
 
-
-
+    # decision for binary search
     if fml_indicator == [False, False, True]:
-        pageNum = mNum
-        return binary_search(location, pageNum+1)
+        mid_last_range = lNum - mNum
+        pageNum = mNum + (mid_last_range // 2)
+        pageList[2] = pageNum - 1
+        return binary_search(location, pageList)
     
     elif fml_indicator == [False, True, True]:
-        return binary_search(location, mNum)
+        pageList[2] = mNum - 1
+        pageList[1] = pageList[2] // 2
+        return binary_search(location, pageList)
     
     elif fml_indicator == [False, False, False]:
-        pageNum = pageNum * 2
-        return binary_search(location, pageNum+1)
+        mid_last_range = lNum - mNum
+        pageList[2] = lNum + mid_last_range
+        return binary_search(location, pageList)
 
     else:
-        pageNum = fNum
-        return binary_search(location, pageNum-1)
+        return binary_search(location, pageList)
 
 # TODO: need a proper data structure - too long to scrape latest page
 def getLastestPage(page:str, location='Kota%20Kinabalu'):
@@ -129,7 +138,13 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
                 if "Will be available soon..." in target.text:
                     # binary search
                     print("Initiate Binary Search")
-                    page = binary_search(location, page)
+                    fNum = page // 2
+                    mNum = fNum + fNum // 2
+                    lNum = page
+                    pageList = [fNum, mNum, lNum]
+
+                    # get the actual page
+                    page = binary_search(location, pageList)
                     edge_indicator = False # breaking
 
             if edge_indicator:
@@ -249,9 +264,10 @@ if __name__ == "__main__":
                 page=0,
                 location=loc
             )
+            new_page = 0
 
         # only scrape the new page title
-        for p in range(1, today_page[loc]+1):
+        for p in range(1, today_page[loc]):
             text = f"Scraping {loc} on page {p}"
             getData.displayText(text)
 
