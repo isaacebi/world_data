@@ -14,6 +14,7 @@ def displayText(texts):
     cmd = 'echo {}'.format(texts)
     os.system(cmd)
 
+
 # get the "LOCAL SABAH NEWS" section title for each page
 def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> list:
     # creating extracting list
@@ -59,7 +60,8 @@ def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> l
         news = {
             'date': date.text.split('\n')[1].strip(),
             'location': date.text.split('\n')[2].strip(),
-            'title': title.text.strip()
+            'title': title.text.strip(),
+            'title_link': title.find('a')['href']
         }
 
         # if news is valid : to avoid getting nans

@@ -25,6 +25,7 @@ TRACK_PATH = os.path.join(DATA_DE, 'static.json')
 TITLE_PATH = os.path.join(DATA_DE, 'news.db')
 
 # %%
+# read json file
 def getJson(jsonPath):
     # read json file
     with open(jsonPath, 'r') as f:
@@ -40,6 +41,7 @@ def getJson(jsonPath):
 
     return trackData
 
+# create request connection
 def getRequest(URL):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
@@ -72,8 +74,8 @@ def binary_search(location:str, pageList:list) -> int:
         fml_indicator.append(indicator)
     
     # for troubleshooting
-    print(pageList)
-    print(fml_indicator)
+    # print(pageList)
+    # print(fml_indicator)
 
     # check end number
     URL = f"https://www.dailyexpress.com.my/local/?location={location}&pageNo={pageNum}"
@@ -120,9 +122,8 @@ def binary_search(location:str, pageList:list) -> int:
     else:
         return binary_search(location, pageList)
 
-# TODO: need a proper data structure - too long to scrape latest page
+# get latest page
 def getLastestPage(page:str, location='Kota%20Kinabalu'):
-
 
     if page == 0:
         # initial state
@@ -171,11 +172,13 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
 
     return page
 
+# create connection
 def getDB(cnx, tableName='title') -> pd.DataFrame():
     # query to pandas on forecast table
     df = pd.read_sql_query(f"SELECT * FROM {tableName}", cnx)
     return df
 
+# to commit new title
 def commitDB(df:pd.DataFrame(), tableName:str, cnx):
     # skip if df is not true
     if df.empty:
@@ -184,19 +187,20 @@ def commitDB(df:pd.DataFrame(), tableName:str, cnx):
         return None
 
     # create sql if sql not exist
-    create_sql = f"CREATE TABLE IF NOT EXISTS {tableName} (date TEXT, location TEXT, title TEXT)"
+    create_sql = f"CREATE TABLE IF NOT EXISTS {tableName} (date TEXT, location TEXT, title TEXT, title_link TEXT)"
     cursor = cnx.cursor()
     cursor.execute(create_sql)
 
     # insert new data to db
     for row in df.itertuples():
-        insert_sql = f"INSERT INTO {tableName} (date, location, title) VALUES (?, ?, ?)"
-        data = (row[1], row[2], row[3])
+        insert_sql = f"INSERT INTO {tableName} (date, location, title) VALUES (?, ?, ?, ?)"
+        data = (row[1], row[2], row[3], row[4])
         cursor.execute(insert_sql, data)
 
     # commit to db
     cnx.commit()
 
+# track which fail to get title
 def commitDBF(df:pd.DataFrame(), tableName:str, cnx):
     # skip if df is not true
     if df.empty:
@@ -222,6 +226,7 @@ def commitDBF(df:pd.DataFrame(), tableName:str, cnx):
     
 if __name__ == "__main__":
     today_page = {}
+    FORCE_INITIAL_STATE = True
 
     # create db connection
     conn = sqlite3.connect(TITLE_PATH)
@@ -252,6 +257,10 @@ if __name__ == "__main__":
 
         # update today page - work with empty file
         try:
+            # to force start from empy
+            if FORCE_INITIAL_STATE == True:
+                yesterday_page[loc] = 0
+                
             today_page[loc] = getLastestPage(
                 page=yesterday_page[loc],
                 location=loc
@@ -289,7 +298,7 @@ if __name__ == "__main__":
         # success
         dft = pd.concat([dft, df_title]).drop_duplicates(keep=False)
         # commit in every location
-        commitDB(dft, 'title', conn)
+        commitDB(dft, 'title_new', conn)
 
         # fail
         commitDBF(rerun, 'fail_title', conn)
