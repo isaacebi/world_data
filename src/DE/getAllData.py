@@ -1,5 +1,6 @@
 # %% Libraries
 import os
+import sys
 import json
 import time
 import random
@@ -8,9 +9,7 @@ import sqlite3
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-
-# internal module
-import getData
+from concurrent.futures import ThreadPoolExecutor
 
 # %% PATHING
 CURR_FILE = pathlib.Path(__file__).resolve()
@@ -23,6 +22,15 @@ TRACK_PATH = os.path.join(DATA_DE, 'static.json')
 
 # DB
 TITLE_PATH = os.path.join(DATA_DE, 'news.db')
+
+# append system path
+sys.path.append(str(CURR_FILE.parents[2]))
+
+# %%
+
+# internal module
+import getData
+from src.utils import db_helper
 
 # %%
 # read json file
@@ -172,69 +180,27 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
 
     return page
 
-# create connection
-def getDB(cnx, tableName='title') -> pd.DataFrame():
-    # query to pandas on forecast table
-    df = pd.read_sql_query(f"SELECT * FROM {tableName}", cnx)
-    return df
-
-# to commit new title
-def commitDB(df:pd.DataFrame(), tableName:str, cnx):
-    # skip if df is not true
-    if df.empty:
-        text = "Nothing to commit"
-        getData.displayText(text)
-        return None
-
-    # create sql if sql not exist
-    create_sql = f"CREATE TABLE IF NOT EXISTS {tableName} (date TEXT, location TEXT, title TEXT, title_link TEXT)"
-    cursor = cnx.cursor()
-    cursor.execute(create_sql)
-
-    # insert new data to db
-    for row in df.itertuples():
-        insert_sql = f"INSERT INTO {tableName} (date, location, title) VALUES (?, ?, ?, ?)"
-        data = (row[1], row[2], row[3], row[4])
-        cursor.execute(insert_sql, data)
-
-    # commit to db
-    cnx.commit()
-
-# track which fail to get title
-def commitDBF(df:pd.DataFrame(), tableName:str, cnx):
-    # skip if df is not true
-    if df.empty:
-        text = "Nothing to commit"
-        getData.displayText(text)
-        return None
-
-    # create sql if sql not exist
-    create_sql = f"CREATE TABLE IF NOT EXISTS {tableName} (location TEXT, page INTEGER)"
-    cursor = cnx.cursor()
-    cursor.execute(create_sql)
-
-    # insert new data to db
-    for row in df.itertuples():
-        insert_sql = f"INSERT INTO {tableName} (location, page) VALUES (?, ?)"
-        data = (row[1], row[2])
-        cursor.execute(insert_sql, data)
-
-    # commit to db
-    cnx.commit()
-
 # %%
     
 if __name__ == "__main__":
+    # initialization
     today_page = {}
     FORCE_INITIAL_STATE = True
 
+    executor = ThreadPoolExecutor(16)
+
     # create db connection
-    conn = sqlite3.connect(TITLE_PATH)
+    # conn = sqlite3.connect(TITLE_PATH)
+    news_db = db_helper.SQLite_Helper(
+        DB_path=TITLE_PATH
+    )
     text = "Connecting DB"
     getData.displayText(text)
 
-    # get db
-    df_title = getDB(conn) # success
+    # get existing db
+    df_title = news_db.getDB(
+        tableName='title_new'
+    )
     # df_fail = getDB(conn, 'fail_title')
 
     # get recent page
@@ -242,6 +208,7 @@ if __name__ == "__main__":
 
     # get all locations
     locations = getData.getLocations()
+
     # removing duplicated if any
     locations = list(dict.fromkeys(locations))
 
@@ -251,9 +218,8 @@ if __name__ == "__main__":
 
     # go through location by location and get the data
     # make it go through one by one, its not ideal to run the whole batch in a single run
+    # to consider using threading, but ip block is a problem
     for loc in locations:
-        # if loc == 'Keningau' or loc == 'Kota%20Belud':
-        #     continue
 
         # update today page - work with empty file
         try:
@@ -275,18 +241,27 @@ if __name__ == "__main__":
             )
             new_page = 0
 
+        futures = []
         # only scrape the new page title
         for p in range(1, today_page[loc]):
+            future = executor.submit(getData.getTitle, loc, str(p))
+            futures.append(future)
+
+        for future in futures:
+            # display status
             text = f"Scraping {loc} on page {p}"
             getData.displayText(text)
 
+            titles = future.result()
+            
+            # delay
             time.sleep(2)
 
-            
-            titles = getData.getTitle(
-                location=loc,
-                page=str(p)
-            )
+            # scraping
+            # titles = getData.getTitle(
+            #     location=loc,
+            #     page=str(p)
+            # )
 
             if isinstance(titles, dict):
                 text = f"Fail to scrape {loc} on page {p}"
@@ -295,13 +270,33 @@ if __name__ == "__main__":
             else:
                 dft = pd.concat([dft, pd.DataFrame(titles)])
 
-        # success
+        # success scenario
         dft = pd.concat([dft, df_title]).drop_duplicates(keep=False)
-        # commit in every location
-        commitDB(dft, 'title_new', conn)
 
-        # fail
-        commitDBF(rerun, 'fail_title', conn)
+        # commit in every location
+        # information scraped
+        information_values = {
+            'TEXT': ['date', 'location', 'title', 'title_link']
+        }
+
+        # commit db
+        news_db.commitDB(
+            tableName='title_name',
+            values=information_values,
+            df = dft
+        )
+
+        # fail scenario
+        failed_information = {
+            'TEXT': ['location'],
+            'INTEGER': ['page']
+        }
+        # commitDBF(rerun, 'fail_title', conn)
+        news_db.commitDB(
+            tableName='fail_title',
+            values=failed_information,
+            df=rerun
+        )
 
     # update json file
     with open(TRACK_PATH, 'w') as f:

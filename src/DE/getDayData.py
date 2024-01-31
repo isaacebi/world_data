@@ -75,14 +75,14 @@ def commitDB(df:pd.DataFrame(), cnx):
         return None
 
     # create sql if sql not exist
-    create_sql = "CREATE TABLE IF NOT EXISTS title (date TEXT, location TEXT, title TEXT)"
+    create_sql = "CREATE TABLE IF NOT EXISTS title (date TEXT, location TEXT, title TEXT, title_link TEXT)"
     cursor = cnx.cursor()
     cursor.execute(create_sql)
 
     # insert new data to db
     for row in df.itertuples():
-        insert_sql = "INSERT INTO title (date, location, title) VALUES (?, ?, ?)"
-        data = (row[1], row[2], row[3])
+        insert_sql = "INSERT INTO title (date, location, title, title_link) VALUES (?, ?, ?, ?)"
+        data = (row[1], row[2], row[3], row[4])
         cursor.execute(insert_sql, data)
 
     # commit to db
