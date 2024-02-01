@@ -7,6 +7,7 @@ import random
 import pathlib
 import sqlite3
 import requests
+import threading
 import pandas as pd
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
@@ -26,10 +27,9 @@ TITLE_PATH = os.path.join(DATA_DE, 'news.db')
 # append system path
 sys.path.append(str(CURR_FILE.parents[2]))
 
-# %%
-
-# internal module
+# %% Internal Module
 import getData
+from src.utils.status_helper import displayText
 from src.utils import db_helper
 
 # %%
@@ -163,7 +163,7 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
         indicator = False
 
         text = f"Latest page from {location} is {page}"
-        getData.displayText(text)
+        displayText(text)
 
         baseURL = f"https://www.dailyexpress.com.my/local/?location={location}&pageNo={page}"
         targets = getRequest(baseURL)
@@ -180,28 +180,36 @@ def getLastestPage(page:str, location='Kota%20Kinabalu'):
 
     return page
 
+
 # %%
-    
 if __name__ == "__main__":
-    # initialization
+    #################
+    # Initilization #
+    #################
     today_page = {}
     FORCE_INITIAL_STATE = True
 
+    # create empty dataframe
+    dft = pd.DataFrame()
+    rerun = pd.DataFrame()
+
+    # threading
     executor = ThreadPoolExecutor(16)
+    thred_lock = threading.Lock()
+
+    ######################
+    # Get Previous State #
+    ######################
 
     # create db connection
-    # conn = sqlite3.connect(TITLE_PATH)
     news_db = db_helper.SQLite_Helper(
         DB_path=TITLE_PATH
     )
-    text = "Connecting DB"
-    getData.displayText(text)
 
     # get existing db
     df_title = news_db.getDB(
         tableName='title_new'
     )
-    # df_fail = getDB(conn, 'fail_title')
 
     # get recent page
     yesterday_page = getJson(TRACK_PATH)
@@ -212,9 +220,10 @@ if __name__ == "__main__":
     # removing duplicated if any
     locations = list(dict.fromkeys(locations))
 
-    # create empty dataframe
-    dft = pd.DataFrame() # store data
-    rerun = pd.DataFrame() # to be run again
+
+    #
+    # Operation
+    #
 
     # go through location by location and get the data
     # make it go through one by one, its not ideal to run the whole batch in a single run
@@ -248,27 +257,21 @@ if __name__ == "__main__":
             futures.append(future)
 
         for future in futures:
-            # display status
-            text = f"Scraping {loc} on page {p}"
-            getData.displayText(text)
-
             titles = future.result()
-            
-            # delay
-            time.sleep(2)
-
-            # scraping
-            # titles = getData.getTitle(
-            #     location=loc,
-            #     page=str(p)
-            # )
 
             if isinstance(titles, dict):
-                text = f"Fail to scrape {loc} on page {p}"
-                getData.displayText(text)
+                # status response
+                displayText(
+                    f"Fail to scrape {loc} on page {p}"
+                )
                 rerun = pd.concat([rerun, pd.DataFrame(titles, index=[0])])
             else:
-                dft = pd.concat([dft, pd.DataFrame(titles)])
+                # status response
+                displayText(
+                    f"Merging variable"
+                )
+                with thred_lock:
+                    dft = pd.concat([dft, pd.DataFrame(titles)])
 
         # success scenario
         dft = pd.concat([dft, df_title]).drop_duplicates(keep=False)
@@ -281,7 +284,7 @@ if __name__ == "__main__":
 
         # commit db
         news_db.commitDB(
-            tableName='title_name',
+            tableName='title_new',
             values=information_values,
             df = dft
         )
@@ -301,5 +304,3 @@ if __name__ == "__main__":
     # update json file
     with open(TRACK_PATH, 'w') as f:
         json.dump(today_page, f)
-
-# %%

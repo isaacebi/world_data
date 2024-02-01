@@ -1,22 +1,28 @@
 # %%
 import os
 import re
+import sys
 import time
+import pathlib
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 
-# %%
-baseURL = "https://www.dailyexpress.com.my"
+#%% Pathing
+CURR_FILE = pathlib.Path(__file__).resolve()
+PROJECT_DIR = CURR_FILE.parents[2]
+
+#%% System Config
+sys.path.append(str(CURR_FILE.parents[2]))
+
+# %% Internal Modules
+from src.utils.status_helper import displayText
 
 # %%
-def displayText(texts):
-    cmd = 'echo {}'.format(texts)
-    os.system(cmd)
-
 
 # get the "LOCAL SABAH NEWS" section title for each page
 def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> list:
+    time.sleep(2)
     # creating extracting list
     local_url = url + '/local'
     location_url = local_url + f"/?location={location}"
@@ -67,6 +73,11 @@ def getTitle(location:str, page:str, url="https://www.dailyexpress.com.my") -> l
         # if news is valid : to avoid getting nans
         if news:
             newslist.append(news)
+
+    # status response
+    displayText(
+        f"Scraping {location} on page {page}"
+    )
         
     return newslist
 
@@ -113,8 +124,10 @@ def getLocations(URL="https://www.dailyexpress.com.my/index.cfm") -> list:
     return locations
 
 # %%
+baseURL = "https://www.dailyexpress.com.my"
 
 if __name__ == "__main__":
+    # scraping example
     titles = getTitle(
         location = "Kota%20Kinabalu",
         page = "1",

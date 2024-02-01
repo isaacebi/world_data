@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+from src.utils.status_helper import displayText
 
 class SQLite_Helper:
     def __init__(self, DB_path):
@@ -11,9 +12,19 @@ class SQLite_Helper:
             query = f"SELECT * FROM {tableName}"
             df = pd.read_sql_query(query, self.cnx)
 
+            # status response
+            displayText(
+                f"Established connection to {tableName}"
+            )
+
         # if unable to connect or table is unavailable, just return empty dataframe
         except:
             df = pd.DataFrame()
+
+            # status response
+            displayText(
+                f"Unable to connect or {tableName} unavailable, proceed with dataframe instantiation"
+            )
 
         finally:
             return df
@@ -21,6 +32,11 @@ class SQLite_Helper:
     def commitDB(self, tableName, values, df):
         # check if data to commit is empty - error handling
         if df.empty:
+            # status response
+            displayText(
+                f"Nothing to commit"
+            )
+
             return None
 
         # initialization
@@ -47,3 +63,11 @@ class SQLite_Helper:
         
         # commit to db
         self.cnx.commit()
+
+        # status response
+        displayText(
+            f"Successfully commit to {tableName}"
+        )
+
+if __name__=="__main__":
+    pass
