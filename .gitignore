@@ -2,4 +2,6 @@
 data/MET/token.txt
 
 *.pyc
+*pdf
 .vscode/settings.json
+
